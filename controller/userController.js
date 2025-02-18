@@ -1,5 +1,8 @@
 const bcrypt = require("bcrypt");
 const User = require("../models/userModel");
+const jwt = require("jsonwebtoken");
+
+const SECRET_KEY = process.env.JWT_SECRET || "your_secret_key";
 //  REGISTER USER
 
 const registerUser = async (req, res) => {
@@ -30,8 +33,23 @@ const registerUser = async (req, res) => {
     });
 
     const registeredUser = await newUser.save();
+    const token = jwt.sign({ id: newUser._id }, SECRET_KEY, {
+      expiresIn: "1h",
+    });
 
-    res.status(201).json(registeredUser);
+    return res.status(200).json({
+      token,
+      newUser: {
+        id: newUser._id,
+        userName: newUser.userName,
+        email: newUser.email,
+        phoneNumber: newUser.phoneNumber,
+        name: newUser.name,
+        sex: newUser.sex,
+        maritalStatus: newUser.maritalStatus,
+      },
+    });
+    // res.status(201).json(registeredUser);
   } catch (error) {
     console.error("Registration Error:", error);
 
@@ -76,7 +94,18 @@ const loginUser = async (req, res) => {
       return res.status(400).json({ message: "Invalid password" });
     }
 
-    res.status(200).json(user);
+    const token = jwt.sign({ id: user._id }, SECRET_KEY, { expiresIn: "1h" });
+
+    return res.status(200).json({
+      token,
+      user: {
+        id: user._id,
+        userName: user.userName,
+        email: user.email,
+        phoneNumber: user.phoneNumber,
+        name: user.name,
+      },
+    });
   } catch (error) {
     res.status(500).json({ message: "Error logging in", error });
   }
